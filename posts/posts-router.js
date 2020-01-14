@@ -28,28 +28,24 @@ router.post("/", (req, res) => {
 });
 
 router.post("/:id/comments", (req, res) => {
-  if(!Posts.findById(req.params.id)){
-    res.status(404).json({ error: "Could not find post with that ID."})
+  if (!req.body.text) {
+    res
+      .status(400)
+      .json({ errorMessage: "Please provide text for the comment." });
+  } else {
+    Posts.insertComment({ text: req.body.text, post_id: req.params.id })
+      .then(info => {
+        res.status(201).json(req.body);
+      })
+      .catch(err => {
+        if (Posts.findById(req.params.id)[0] === undefined) {
+          res.status(404).json({ error: "Could not find post with that ID." });
+        } else
+          res.status(500).json({
+            error: "There was an error while saving the comment to the database"
+          });
+      });
   }
-    .insertComment(req.body)
-    .then(info => {
-      res.status(201).json(req.body);
-    })
-    .catch(err => {
-      if (!Posts.findById(req.params.id)) {
-        res
-          .status(404)
-          .json({ message: "The post with the specified ID does not exist." });
-      } else if (!req.body.text) {
-        res
-          .status(400)
-          .json({ errorMessage: "Please provide text for the comment." });
-      } else {
-        res.status(500).json({
-          error: "There was an error while saving the comment to the database"
-        });
-      }
-    });
 });
 
 router.get("/", (req, res) => {
