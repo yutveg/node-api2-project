@@ -63,52 +63,46 @@ router.get("/", (req, res) => {
 router.get("/:id", (req, res) => {
   Posts.findById(req.params.id)
     .then(info => {
-      res.status(200).json(info);
-    })
-    .catch(err => {
-      if (!Posts.findById(req.params.id)) {
+      if (info[0] === undefined) {
         res
           .status(404)
-          .json({ message: "The post with the specified ID does not exist." });
+          .json({ error: "A post with that ID could not be found" });
       } else {
-        res
-          .status(500)
-          .json({ error: "The post information could not be retrieved." });
+        res.status(200).json(info);
       }
+    })
+    .catch(err => {
+      res
+        .status(500)
+        .json({ error: "The post information could not be retrieved." });
     });
 });
 
 router.get("/:id/comments", (req, res) => {
   Posts.findPostComments(req.params.id)
     .then(info => {
+      if (info[0] === undefined) {
+        res.status(404).json({ error: "No comments found for this post ID." });
+      }
       res.status(200).json(info);
     })
     .catch(err => {
-      if (!Posts.findPostComments(req.params.id)) {
-        res
-          .status(404)
-          .json({ message: "The post with the specified ID does not exist." });
-      } else {
-        res
-          .status(500)
-          .json({ error: "The comments information could not be retrieved." });
-      }
+      res
+        .status(500)
+        .json({ error: "The comments information could not be retrieved." });
     });
 });
 
 router.delete("/:id", (req, res) => {
   Posts.remove(req.params.id)
     .then(info => {
+      if (info === 0) {
+        res.status(404).json({ error: "Could not find post with this ID" });
+      }
       res.status(200).json(info);
     })
     .catch(err => {
-      if (!Posts.findById(req.params.id)) {
-        res
-          .status(404)
-          .json({ message: "The post with the specified ID does not exist." });
-      } else {
-        res.status(500).json({ error: "The post could not be removed" });
-      }
+      res.status(500).json({ error: "The post could not be removed" });
     });
 });
 
@@ -117,17 +111,15 @@ router.put("/:id", (req, res) => {
     res
       .status(400)
       .json({ error: "Please provide title and contents for the post." });
-  } else if (!Posts.findById(req.params.id)) {
-    res
-      .status(404)
-      .json({ error: "The post with this id could not be found." });
   } else {
     Posts.update(req.params.id, req.body)
       .then(info => {
         if (info === 1) {
           res.status(200).json({ message: "Update successful." });
         } else {
-          res.status(500).json({ error: "The post could not be updated." });
+          res
+            .status(404)
+            .json({ error: "The post for this ID could not be found" });
         }
       })
       .catch(err => {
